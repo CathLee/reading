@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useCallback, useMemo } from "react";
 import { DictionaryResult, VocabWord } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -10,15 +11,21 @@ interface DictionaryPanelProps {
   onAddToVocabulary: (word: VocabWord) => void;
 }
 
-export default function DictionaryPanel({
+// 🔧 Performance: Memoize component to prevent re-renders when props don't change
+const DictionaryPanel = memo(function DictionaryPanel({
   result,
   loading,
   vocabularyIds,
   onAddToVocabulary,
 }: DictionaryPanelProps) {
-  const isInVocabulary = result ? vocabularyIds.has(result.word.toLowerCase()) : false;
+  // 🔧 Performance: Memoize isInVocabulary check
+  const isInVocabulary = useMemo(
+    () => (result ? vocabularyIds.has(result.word.toLowerCase()) : false),
+    [result, vocabularyIds]
+  );
 
-  const handleAddToVocab = () => {
+  // 🔧 Performance: Use useCallback to prevent function re-creation
+  const handleAddToVocab = useCallback(() => {
     if (!result) return;
     const meaning = result.meanings
       .map((m) => `[${m.partOfSpeech}] ${m.definitions[0]?.definition || ""}`)
@@ -31,14 +38,14 @@ export default function DictionaryPanel({
       meaning: meaning.slice(0, 120),
       addedAt: Date.now(),
     });
-  };
+  }, [result, onAddToVocabulary]);
 
-  const handlePlayAudio = () => {
+  const handlePlayAudio = useCallback(() => {
     if (result?.audio) {
       const audio = new Audio(result.audio);
       audio.play().catch(() => {});
     }
-  };
+  }, [result?.audio]);
 
   return (
     <div className="h-full flex flex-col bg-zinc-900/50 border-l border-zinc-800">
@@ -204,4 +211,6 @@ export default function DictionaryPanel({
       </div>
     </div>
   );
-}
+});
+
+export default DictionaryPanel;

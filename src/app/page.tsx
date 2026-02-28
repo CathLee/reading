@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, Suspense } from "react";
+import { useState, useCallback, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import VocabularyPanel from "@/components/VocabularyPanel";
@@ -43,7 +43,11 @@ function HomeContent() {
     }
   }, [searchParams]);
 
-  const vocabularyWordSet = new Set(vocabulary.map((w) => w.word.toLowerCase()));
+  // 🔧 Performance: Memoize vocabularyWordSet to prevent unnecessary re-creation
+  const vocabularyWordSet = useMemo(
+    () => new Set(vocabulary.map((w) => w.word.toLowerCase())),
+    [vocabulary]
+  );
 
   const handleNewProject = (title: string, text: string) => {
     const newSentences = splitIntoSentences(text);

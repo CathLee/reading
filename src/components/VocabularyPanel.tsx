@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { VocabWord } from "@/types";
 
 interface VocabularyPanelProps {
@@ -7,7 +8,8 @@ interface VocabularyPanelProps {
   onRemoveWord: (id: string) => void;
 }
 
-export default function VocabularyPanel({
+// 🔧 Performance: Memoize component to prevent re-renders when props don't change
+const VocabularyPanel = memo(function VocabularyPanel({
   words,
   onRemoveWord,
 }: VocabularyPanelProps) {
@@ -105,4 +107,6 @@ export default function VocabularyPanel({
       </div>
     </div>
   );
-}
+});
+
+export default VocabularyPanel;
