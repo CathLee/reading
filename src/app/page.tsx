@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import VocabularyPanel from "@/components/VocabularyPanel";
 import DictionaryPanel from "@/components/DictionaryPanel";
 import TranslationWorkspace from "@/components/TranslationWorkspace";
 import NewProjectModal from "@/components/NewProjectModal";
 import { splitIntoSentences } from "@/lib/sentences";
-import { saveProject } from "@/lib/storage";
+import { saveProject, getProject as loadProject } from "@/lib/storage";
 import {
   VocabWord,
   DictionaryResult,
@@ -15,7 +16,9 @@ import {
   TranslationProject,
 } from "@/types";
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [project, setProject] = useState<TranslationProject | null>(null);
   const [sentences, setSentences] = useState<SentencePair[]>([]);
   const [vocabulary, setVocabulary] = useState<VocabWord[]>([]);
@@ -23,6 +26,22 @@ export default function Home() {
   const [dictLoading, setDictLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string>("");
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Load historical project from URL param on mount
+  useEffect(() => {
+    const projectId = searchParams.get("project");
+    if (projectId) {
+      const existingProject = loadProject(projectId);
+      if (existingProject) {
+        setProject(existingProject);
+        setSentences(existingProject.sentences);
+        setVocabulary(existingProject.vocabulary);
+        setIsEditMode(true);
+        setDictResult(null);
+      }
+    }
+  }, [searchParams]);
 
   const vocabularyWordSet = new Set(vocabulary.map((w) => w.word.toLowerCase()));
 
@@ -42,6 +61,9 @@ export default function Home() {
     setVocabulary([]);
     setDictResult(null);
     setShowModal(false);
+    setIsEditMode(false);
+    // Clear URL param when creating a new project
+    router.replace("/", { scroll: false });
   };
 
   const handleTranslationChange = useCallback(
@@ -193,6 +215,11 @@ export default function Home() {
           <h1 className="text-sm font-medium text-zinc-300 truncate max-w-xs">
             {project.title}
           </h1>
+          {isEditMode && (
+            <span className="text-xs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              编辑中
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {saveStatus && (
@@ -265,5 +292,19 @@ export default function Home() {
         onSubmit={handleNewProject}
       />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }
