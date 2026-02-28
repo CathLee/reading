@@ -151,7 +151,8 @@ export default function HistoryPage() {
               return (
                 <div
                   key={project.id}
-                  className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-colors group"
+                  className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 hover:border-emerald-500/30 transition-colors group cursor-pointer"
+                  onClick={() => window.location.href = `/?project=${project.id}`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="text-sm font-semibold text-zinc-200 truncate flex-1 mr-2">
@@ -170,7 +171,7 @@ export default function HistoryPage() {
                   <div className="mb-3">
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="text-zinc-500">
-                        {translatedCount}/{project.sentences.length} 句
+                        已翻译 {translatedCount}/{project.sentences.length} 句
                       </span>
                       <span className="text-zinc-500">{progress}%</span>
                     </div>
@@ -206,14 +207,19 @@ export default function HistoryPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span
+                      className="text-xs px-3 py-1.5 text-emerald-400 bg-emerald-500/10 rounded-md transition-colors border border-emerald-500/20"
+                    >
+                      继续翻译
+                    </span>
                     <button
-                      onClick={() => handleExport(project)}
+                      onClick={(e) => { e.stopPropagation(); handleExport(project); }}
                       className="text-xs px-3 py-1.5 text-zinc-500 hover:text-zinc-300 bg-zinc-800/50 rounded-md transition-colors"
                     >
                       导出
                     </button>
                     <button
-                      onClick={() => handleDelete(project.id)}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}
                       className="text-xs px-3 py-1.5 text-red-500/60 hover:text-red-400 bg-zinc-800/50 rounded-md transition-colors"
                     >
                       删除
