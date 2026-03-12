@@ -6,12 +6,16 @@ import { VocabWord } from "@/types";
 interface VocabularyPanelProps {
   words: VocabWord[];
   onRemoveWord: (id: string) => void;
+  onWordClick?: (word: string) => void;
+  highlightWord?: string | null;
 }
 
 // 🔧 Performance: Memoize component to prevent re-renders when props don't change
 const VocabularyPanel = memo(function VocabularyPanel({
   words,
   onRemoveWord,
+  onWordClick,
+  highlightWord,
 }: VocabularyPanelProps) {
   return (
     <div className="h-full flex flex-col bg-zinc-900/50 border-r border-zinc-800">
@@ -61,14 +65,23 @@ const VocabularyPanel = memo(function VocabularyPanel({
           </div>
         ) : (
           <ul className="divide-y divide-zinc-800/50">
-            {words.map((w) => (
+            {words.map((w) => {
+              const isActive = highlightWord?.toLowerCase() === w.word.toLowerCase();
+              return (
               <li
                 key={w.id}
-                className="group px-4 py-3 hover:bg-zinc-800/30 transition-colors"
+                className={`group px-4 py-3 transition-colors cursor-pointer ${
+                  isActive
+                    ? "bg-emerald-500/15 border-l-2 border-emerald-400"
+                    : "hover:bg-zinc-800/30 border-l-2 border-transparent"
+                }`}
+                onClick={() => onWordClick?.(w.word)}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <span className="text-sm font-medium text-emerald-400 block">
+                    <span className={`text-sm font-medium block ${
+                      isActive ? "text-emerald-300" : "text-emerald-400"
+                    }`}>
                       {w.word}
                     </span>
                     {w.phonetic && (
@@ -81,7 +94,7 @@ const VocabularyPanel = memo(function VocabularyPanel({
                     </span>
                   </div>
                   <button
-                    onClick={() => onRemoveWord(w.id)}
+                    onClick={(e) => { e.stopPropagation(); onRemoveWord(w.id); }}
                     className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 transition-all mt-0.5 shrink-0"
                     title="移除"
                   >
@@ -101,7 +114,8 @@ const VocabularyPanel = memo(function VocabularyPanel({
                   </button>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>

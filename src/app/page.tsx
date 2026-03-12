@@ -27,6 +27,7 @@ function HomeContent() {
   const [showModal, setShowModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string>("");
   const [isEditMode, setIsEditMode] = useState(false);
+  const [highlightWord, setHighlightWord] = useState<string | null>(null);
 
   // Load historical project from URL param on mount
   useEffect(() => {
@@ -114,6 +115,10 @@ function HomeContent() {
 
   const handleRemoveFromVocabulary = useCallback((id: string) => {
     setVocabulary((prev) => prev.filter((w) => w.id !== id));
+  }, []);
+
+  const handleVocabWordClick = useCallback((word: string) => {
+    setHighlightWord((prev) => (prev === word ? null : word));
   }, []);
 
   const handleSave = useCallback(() => {
@@ -259,6 +264,8 @@ function HomeContent() {
           <VocabularyPanel
             words={vocabulary}
             onRemoveWord={handleRemoveFromVocabulary}
+            onWordClick={handleVocabWordClick}
+            highlightWord={highlightWord}
           />
         </aside>
 
@@ -275,6 +282,7 @@ function HomeContent() {
               sentences={sentences}
               onTranslationChange={handleTranslationChange}
               onWordSelect={handleWordSelect}
+              highlightWord={highlightWord}
             />
           </div>
         </main>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, memo, useEffect } from "react";
+import { useCallback, useRef, memo, useEffect, useMemo } from "react";
 import { SentencePair } from "@/types";
 
 // 🔧 Performance: Extract SentenceItem as a separate memoized component
@@ -9,38 +9,76 @@ interface SentenceItemProps {
   pair: SentencePair;
   index: number;
   onTranslationChange: (id: string, value: string) => void;
+  highlightWord?: string | null;
+  containsHighlight?: boolean;
+}
+
+function highlightWordInText(text: string, word: string): React.ReactNode {
+  const regex = new RegExp(`(\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b)`, "gi");
+  const parts = text.split(regex);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) =>
+    regex.test(part) ? (
+      <mark key={i} className="bg-emerald-500/30 text-emerald-200 rounded px-0.5">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
 }
 
 const SentenceItem = memo(function SentenceItem({
   pair,
   index,
   onTranslationChange,
+  highlightWord,
+  containsHighlight,
 }: SentenceItemProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const sentenceRef = useRef<HTMLDivElement>(null);
 
   // 🎨 Auto-resize textarea based on content
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      // Reset height to auto to get the correct scrollHeight
       textarea.style.height = "auto";
-      // Set height to scrollHeight to fit content
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
   }, [pair.translation]);
 
+  // Scroll into view when highlighted
+  useEffect(() => {
+    if (containsHighlight && sentenceRef.current) {
+      sentenceRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [containsHighlight, highlightWord]);
+
   return (
-    <div className="group">
+    <div
+      ref={sentenceRef}
+      className={`group rounded-lg transition-all duration-300 ${
+        containsHighlight
+          ? "bg-emerald-500/5 ring-1 ring-emerald-500/20 p-3 -mx-3"
+          : ""
+      }`}
+    >
       {/* Sentence number */}
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs font-mono text-zinc-600 bg-zinc-800/50 px-2 py-0.5 rounded">
+        <span className={`text-xs font-mono px-2 py-0.5 rounded ${
+          containsHighlight
+            ? "text-emerald-400 bg-emerald-500/10"
+            : "text-zinc-600 bg-zinc-800/50"
+        }`}>
           {index + 1}
         </span>
       </div>
 
       {/* English sentence */}
       <p className="text-base text-zinc-200 leading-relaxed mb-2 select-text cursor-text px-1">
-        {pair.english}
+        {highlightWord && containsHighlight
+          ? highlightWordInText(pair.english, highlightWord)
+          : pair.english}
       </p>
 
       {/* Translation textarea - auto-expanding */}
@@ -62,12 +100,14 @@ interface TranslationWorkspaceProps {
   sentences: SentencePair[];
   onTranslationChange: (id: string, value: string) => void;
   onWordSelect: (word: string) => void;
+  highlightWord?: string | null;
 }
 
 export default function TranslationWorkspace({
   sentences,
   onTranslationChange,
   onWordSelect,
+  highlightWord,
 }: TranslationWorkspaceProps) {
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -101,6 +141,14 @@ export default function TranslationWorkspace({
     [onWordSelect]
   );
 
+  const highlightSentenceIds = useMemo(() => {
+    if (!highlightWord) return new Set<string>();
+    const regex = new RegExp(`\\b${highlightWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+    return new Set(
+      sentences.filter((s) => regex.test(s.english)).map((s) => s.id)
+    );
+  }, [highlightWord, sentences]);
+
   if (sentences.length === 0) {
     return null;
   }
@@ -117,6 +165,8 @@ export default function TranslationWorkspace({
           pair={pair}
           index={index}
           onTranslationChange={onTranslationChange}
+          highlightWord={highlightWord}
+          containsHighlight={highlightSentenceIds.has(pair.id)}
         />
       ))}
     </div>
