@@ -173,7 +173,7 @@ function HomeContent() {
             <br />
             智能断句 · 划词翻译 · 生词收录 · 历史存档
           </p>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-4 flex-wrap">
             <button
               onClick={() => setShowModal(true)}
               className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
@@ -185,6 +185,12 @@ function HomeContent() {
               className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium rounded-xl transition-colors border border-zinc-700"
             >
               历史笔记本
+            </a>
+            <a
+              href="/canvas"
+              className="px-8 py-3 bg-gradient-to-r from-amber-900/30 to-emerald-900/30 hover:from-amber-800/40 hover:to-emerald-800/40 text-zinc-300 font-medium rounded-xl transition-colors border border-amber-700/30"
+            >
+              画布记词
             </a>
           </div>
         </div>
@@ -247,6 +253,12 @@ function HomeContent() {
             className="text-xs px-3 py-1.5 text-zinc-500 hover:text-zinc-300 transition-colors"
           >
             历史
+          </a>
+          <a
+            href="/canvas"
+            className="text-xs px-3 py-1.5 text-zinc-500 hover:text-amber-400 transition-colors"
+          >
+            画布
           </a>
           <button
             onClick={handleSave}

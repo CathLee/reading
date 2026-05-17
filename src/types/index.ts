@@ -39,3 +39,35 @@ export interface TranslationProject {
   createdAt: number;
   updatedAt: number;
 }
+
+// Canvas Memory types
+export interface CanvasPoint {
+  x: number;
+  y: number;
+}
+
+export interface CanvasStroke {
+  color: string;
+  size: number;
+  mode: "pen" | "eraser";
+  points: CanvasPoint[];
+}
+
+export interface CanvasWord {
+  id: string;
+  word: string;
+  phonetic?: string;
+  meaning?: string;
+  x: number;
+  y: number;
+}
+
+export interface CanvasEntry {
+  id: string;
+  title: string;
+  strokes: CanvasStroke[];
+  words: CanvasWord[];
+  width: number;
+  height: number;
+  createdAt: number;
+}

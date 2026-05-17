@@ -97,12 +97,20 @@ export default function HistoryPage() {
               </p>
             </div>
           </div>
-          <a
-            href="/"
-            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            新建项目
-          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href="/canvas"
+              className="px-5 py-2 text-zinc-400 hover:text-amber-400 text-sm font-medium transition-colors"
+            >
+              画布记词
+            </a>
+            <a
+              href="/"
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              新建项目
+            </a>
+          </div>
         </div>
       </header>
 

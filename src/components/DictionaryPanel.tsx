@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { DictionaryResult, VocabWord } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -18,27 +18,74 @@ const DictionaryPanel = memo(function DictionaryPanel({
   vocabularyIds,
   onAddToVocabulary,
 }: DictionaryPanelProps) {
+  const [addingToVocab, setAddingToVocab] = useState(false);
+
   // 🔧 Performance: Memoize isInVocabulary check
   const isInVocabulary = useMemo(
     () => (result ? vocabularyIds.has(result.word.toLowerCase()) : false),
     [result, vocabularyIds]
   );
 
-  // 🔧 Performance: Use useCallback to prevent function re-creation
-  const handleAddToVocab = useCallback(() => {
-    if (!result) return;
-    const meaning = result.meanings
-      .map((m) => `[${m.partOfSpeech}] ${m.definitions[0]?.definition || ""}`)
-      .join("; ");
+  // 获取中文翻译并添加到生词本
+  const handleAddToVocab = useCallback(async () => {
+    if (!result || addingToVocab) return;
 
-    onAddToVocabulary({
-      id: uuidv4(),
-      word: result.word,
-      phonetic: result.phonetic,
-      meaning: meaning.slice(0, 120),
-      addedAt: Date.now(),
-    });
-  }, [result, onAddToVocabulary]);
+    setAddingToVocab(true);
+    try {
+      // 直接翻译单词本身
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: result.word }),
+      });
+
+      let meaning = "";
+      if (res.ok) {
+        const data = await res.json();
+        // 组合词性和中文翻译
+        const partOfSpeech = result.meanings[0]?.partOfSpeech || "";
+        const partOfSpeechMap: Record<string, string> = {
+          noun: "n.",
+          verb: "v.",
+          adjective: "adj.",
+          adverb: "adv.",
+          preposition: "prep.",
+          conjunction: "conj.",
+          pronoun: "pron.",
+          interjection: "int.",
+        };
+        const posAbbr = partOfSpeechMap[partOfSpeech] || partOfSpeech;
+        meaning = posAbbr ? `${posAbbr} ${data.translation}` : data.translation;
+      } else {
+        // 翻译失败时使用英文释义作为后备
+        meaning = result.meanings
+          .map((m) => `[${m.partOfSpeech}] ${m.definitions[0]?.definition || ""}`)
+          .join("; ");
+      }
+
+      onAddToVocabulary({
+        id: uuidv4(),
+        word: result.word,
+        phonetic: result.phonetic,
+        meaning: meaning.slice(0, 120),
+        addedAt: Date.now(),
+      });
+    } catch {
+      // 出错时使用英文释义
+      const meaning = result.meanings
+        .map((m) => `[${m.partOfSpeech}] ${m.definitions[0]?.definition || ""}`)
+        .join("; ");
+      onAddToVocabulary({
+        id: uuidv4(),
+        word: result.word,
+        phonetic: result.phonetic,
+        meaning: meaning.slice(0, 120),
+        addedAt: Date.now(),
+      });
+    } finally {
+      setAddingToVocab(false);
+    }
+  }, [result, onAddToVocabulary, addingToVocab]);
 
   const handlePlayAudio = useCallback(() => {
     if (result?.audio) {
@@ -106,14 +153,19 @@ const DictionaryPanel = memo(function DictionaryPanel({
             {/* Add to vocabulary button */}
             <button
               onClick={handleAddToVocab}
-              disabled={isInVocabulary}
+              disabled={isInVocabulary || addingToVocab}
               className={`w-full mb-5 px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                isInVocabulary
+                isInVocabulary || addingToVocab
                   ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
                   : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20"
               }`}
             >
-              {isInVocabulary ? (
+              {addingToVocab ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-zinc-500/30 border-t-zinc-500 rounded-full animate-spin" />
+                  翻译中...
+                </>
+              ) : isInVocabulary ? (
                 <>
                   <svg
                     className="w-4 h-4"
